@@ -383,6 +383,7 @@ void MDRPP::export_sol(const std::string& file_name, std::vector<std::vector<Lis
 void MDRPP::solve()
 {
 	solve_by_mrpp_1();
+	int new_sol_cost_1 = short_cut_walks(sol1.second);
 	if (!check_solution_legality(sol1.second))
 	{
 		std::cout << "Illegal Solution found !!!!!!!!!!!!!!!!!!!!!==============" << std::endl;
@@ -393,6 +394,8 @@ void MDRPP::solve()
 	}
 
 	solve_by_mrpp_2();
+	int new_sol_cost_2 = short_cut_walks(sol2.second);
+
 	if (!check_solution_legality(sol2.second))
 	{
 		std::cout << "Illegal Solution found !!!!!!!!!!!!!!!!!!!!!==============" << std::endl;
@@ -402,21 +405,27 @@ void MDRPP::solve()
 		std::cout << "Solution cost of MRPP2 : " << sol2.first << std::endl;
 	}
 
-	sol.first = std::min(sol1.first, sol2.first);
-	approx_rate_improved_1 = static_cast<double>(sol.first) / std::max(lb_opt_1, lb_opt_2);
-	approx_rate_improved_2 = static_cast<double>(sol.first) / std::max(lb_opt_1_1, lb_opt_2);
-
+	// bound direct from paper
 	const double alpha_1 = 2.0 - 1.0 / static_cast<double>(n_depots);
 	const double beta_1 = 1.0 / static_cast<double>(n_depots);
 	const double alpha_2 = 3.0;
 	const double beta_2 = 2.0;
 
 	const double x = (alpha_2 * static_cast<double>(sol1.first) - alpha_1 * static_cast<double>(sol2.first)) / (alpha_1 * beta_2 + alpha_2 * beta_1);
-	const double lb_1 = (static_cast<double>(sol1.first) - beta_1*x) / alpha_1;
-	const double lb_2 = (static_cast<double>(sol2.first) + beta_2*x) / alpha_2;
+	const double lb_1 = (static_cast<double>(sol1.first) - beta_1 * x) / alpha_1;
+	const double lb_2 = (static_cast<double>(sol2.first) + beta_2 * x) / alpha_2;
 	lb_opt = std::max(lb_1, lb_2);
 
-	
+
+	//update solution cost
+	std::cout << "Solution cost reduced by short cut (MRPP1) : " << sol1.first - new_sol_cost_1 << std::endl;
+	std::cout << "Solution cost reduced by short cut (MRPP2) : " << sol2.first - new_sol_cost_2 << std::endl;
+	sol1.first = new_sol_cost_1;
+	sol2.first = new_sol_cost_2;
+	//
+	sol.first = std::min(sol1.first, sol2.first);
+	approx_rate_improved_1 = static_cast<double>(sol.first) / std::max(lb_opt_1, lb_opt_2);
+	approx_rate_improved_2 = static_cast<double>(sol.first) / std::max(lb_opt_1_1, lb_opt_2);
 	approx_rate = sol.first / lb_opt;
 
 	std::cout << "Solution cost of MRPP : " << sol.first << std::endl;
@@ -438,4 +447,91 @@ void MDRPP::write(const std::string& instance_name)
 	const std::string sol_file_name_2 = "./output/solution/mdrpp_" + instance_name + "_2.sol";
 	export_sol(sol_file_name_1, sol1.second);
 	export_sol(sol_file_name_2, sol2.second);
+}
+
+int MDRPP::short_cut_walks(std::vector<std::vector<ListGraph::Edge>>& walks) const
+{
+	int cost = 0;
+	ListGraph::EdgeMap<bool> is_unvisited_edge(g, true);
+	for (auto& walk : walks)
+	{
+		if(walk.empty())
+		{
+			continue;
+		}
+
+		std::vector<ListGraph::Edge>new_walk;
+		ListGraph::Edge pending_edge = INVALID;
+		for (auto edge : walk)
+		{
+			if (is_unvisited_edge[edge] && is_required[edge])
+			{
+				new_walk.push_back(pending_edge);
+				cost = cost + edge_cost[pending_edge];
+				is_unvisited_edge[pending_edge] = false;
+				pending_edge = INVALID;
+				new_walk.push_back(edge);
+				cost = cost + edge_cost[edge];
+				is_unvisited_edge[edge] = false;
+			}
+			else if (pending_edge == INVALID)
+			{
+				pending_edge = edge;
+			}
+			else
+			{
+				pending_edge = short_cut_two_edges(pending_edge, edge);
+			}
+		}
+		if (pending_edge != INVALID)
+		{
+			new_walk.push_back(pending_edge);
+			cost = cost + edge_cost[pending_edge];
+		}
+		std::swap(new_walk, walk);
+	}
+
+	return cost;
+}
+
+ListGraph::Edge MDRPP::short_cut_two_edges(ListGraph::Edge e1, ListGraph::Edge e2) const
+{
+	ListGraph::Edge short_cut_edge = INVALID;
+
+	auto u1 = g.u(e1);
+	auto v1 = g.v(e1);
+	auto u2 = g.u(e2);
+	auto v2 = g.v(e2);
+	ListGraph::Node s, t;
+	if (u1 == u2)
+	{
+		s = v1;
+		t = v2;
+	}
+	else if (v1 == v2)
+	{
+		s = u1;
+		t = u2;
+	}
+	else if (u1 == v2)
+	{
+		s = u2;
+		t = v1;
+	}
+	else if (u2 == v1)
+	{
+		s = u1;
+		t = v2;
+	}
+
+	for (auto e = findEdge(g, s, t); e != INVALID; e = findEdge(g, s, t, e))
+	{
+		if (short_cut_edge == INVALID || edge_cost[e] < edge_cost[short_cut_edge])
+		{
+			short_cut_edge = e;
+		}
+	}
+
+
+	return short_cut_edge;
 }

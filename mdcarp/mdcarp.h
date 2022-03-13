@@ -62,7 +62,8 @@ public:
 
 	void solve_by_mrpp_1();
 	void solve_by_mrpp_2();
-	void short_cut_walks(std::vector<std::vector<ListGraph::Edge>>& walks);
+	int short_cut_walks(std::vector<std::vector<ListGraph::Edge>>& walks) const;
+	ListGraph::Edge short_cut_two_edges(ListGraph::Edge e1, ListGraph::Edge e2) const;
 	void solve();
 	void write(const std::string& instance_name);
 
