@@ -106,9 +106,9 @@ void MDRPP::solve_by_mrpp_1()
 	graphCopy(filterEdges(g, disable_all_edges), solution_graph).nodeRef(nr).nodeCrossRef(ncr).run();
 
 
-	int cost_F_M = 0;
-	int cost_F = 0;
-	int cost_M = 0;
+	double cost_F_M = 0;
+	double cost_F = 0;
+	double cost_M = 0;
 
 	// add orig edge from F+M
 	for (ListGraph::EdgeIt e(g1); e != INVALID; ++e)
@@ -225,37 +225,7 @@ void MDRPP::solve_by_mrpp_1()
 	sol1.first = cost;
 
 
-	int ub_A = 0;
-	std::vector<int> edge_cost_f;
-	for (FilterEdges<ListGraph>::EdgeIt e(sub_graph_f); e != INVALID; ++e)
-	{
-		edge_cost_f.push_back(edge_cost_for_forest[e]);
-	}
-	std::partial_sort(edge_cost_f.begin(), edge_cost_f.begin() + n_depots - 1, edge_cost_f.end(), std::greater<>());
-	for (int i = 0; i < n_depots - 1; ++i)
-	{
-		ub_A = ub_A + edge_cost_f[i];
-	}
-
-	int lb_sum_e_max = -1;
-	for (ListGraph::NodeIt u(g1); u != INVALID; ++u)
-	{
-		if (is_depot_g1[u])
-		{
-			std::vector<int> edge_cost_adj;
-			for (ListGraph::IncEdgeIt e(g1, u); e != INVALID; ++e)
-			{
-				edge_cost_adj.push_back(-edge_cost_for_matching[e]);
-			}
-			std::partial_sort(edge_cost_adj.begin(), edge_cost_adj.begin() + 2, edge_cost_adj.end());
-			if(lb_sum_e_max<0||lb_sum_e_max>edge_cost_adj[1])
-			{
-				lb_sum_e_max = edge_cost_adj[1];
-			}
-		}
-	}
-
-	int lb_C_R_star = 0;
+	double lb_C_R_star = 0;
 	for (ListGraph::EdgeIt e(g); e != INVALID; ++e)
 	{
 		if (is_required[e])
@@ -269,8 +239,17 @@ void MDRPP::solve_by_mrpp_1()
 		std::cout << "F: " << cost_F << std::endl;
 		std::cout << "M: " << cost_M << std::endl;
 		std::cout << "c_added_R: " << cost_R << std::endl;
-		//std::cout << "lb_C_R_star: " << lb_C_R_star << std::endl;
-		//std::cout << "ub_A: " << ub_A << std::endl;
-		//std::cout << "lb_sum_e_max: " << lb_sum_e_max << std::endl;
 	}
+
+	double alpha = 2.0 - 1.0 / static_cast<double>(n_depots);
+	lb_opt_1 = (cost_F + cost_M) / alpha + lb_C_R_star;
+
+	double beta = 2.0 * static_cast<double>(n_depots) - 2.0;
+
+	double l_max = (2.0 * cost_M - cost_F) / (2.0 * static_cast<double>(n_depots) - 1.0);
+
+	alpha = (cost_F + cost_M) / std::max(cost_F + l_max, 2.0 * cost_M - beta * l_max);
+	lb_opt_1_1 = (cost_F + cost_M) / alpha + lb_C_R_star;
+
+
 }

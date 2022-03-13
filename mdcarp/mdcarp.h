@@ -16,8 +16,11 @@ public:
 	std::pair<int, std::vector<std::vector<ListGraph::Edge>>> sol1;
 	std::pair<int, std::vector<std::vector<ListGraph::Edge>>> sol2;
 	double approx_rate;
+	double approx_rate_improved_1;
+	double approx_rate_improved_2;
 	double lb_opt;
 	double lb_opt_1;
+	double lb_opt_1_1;
 	double lb_opt_2;
 
 	bool _debug = true;
@@ -59,6 +62,7 @@ public:
 
 	void solve_by_mrpp_1();
 	void solve_by_mrpp_2();
+	void short_cut_walks(std::vector<std::vector<ListGraph::Edge>>& walks);
 	void solve();
 	void write(const std::string& instance_name);
 

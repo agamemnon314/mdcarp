@@ -83,13 +83,14 @@ void MDRPP::solve_by_mrpp_2()
 
 	graphCopy(filterEdges(g, is_required), h).nodeCrossRef(ncr_h).edgeCrossRef(ecr_h).nodeRef(nr_h).edgeRef(er_h).run();
 
-	int cost_H = 0;
+	double cost_R = 0;
 
 	for (ListGraph::EdgeIt e(h); e != INVALID; ++e)
 	{
-		cost_H = cost_H + edge_cost[ecr_h[e]];
+		cost_R = cost_R + edge_cost[ecr_h[e]];
 	}
 
+	double cost_M = 0;
 	for (ListGraph::EdgeIt e(ddg); e != INVALID; ++e)
 	{
 		if (mwpm.matching(e) && !is_in_E2[e])
@@ -99,7 +100,7 @@ void MDRPP::solve_by_mrpp_2()
 			auto new_edge = h.addEdge(u_h, v_h);
 			ecr_h[new_edge] = ecr_dgg[e];
 			er_h[ecr_dgg[e]] = new_edge;
-			cost_H = cost_H + edge_cost[ecr_h[new_edge]];
+			cost_M = cost_M + edge_cost[ecr_h[new_edge]];
 		}
 	}
 
@@ -172,7 +173,7 @@ void MDRPP::solve_by_mrpp_2()
 	std::vector<FullGraph::Edge> tree_edges(countNodes(contract_graph) - 1);
 	kruskal(contract_graph, shortest_cut_edge_cost, tree_edges.begin());
 
-	int cost_E = 0;
+	double cost_E = 0;
 	for (auto e : tree_edges)
 	{
 		auto e_g = shortest_cut_edge[e];
@@ -224,7 +225,6 @@ void MDRPP::solve_by_mrpp_2()
 	}
 	sol2.first = cost;
 
-	//std::cout << "H: " << cost_H << std::endl;
-	//std::cout << "E': " << cost_E << std::endl;
+	lb_opt_2 = std::max(cost_M, cost_E) + cost_R;
 }
 

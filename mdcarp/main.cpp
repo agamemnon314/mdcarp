@@ -27,7 +27,7 @@ int main()
         return -1;
     }
     f_out << "name,n_depots,n_required_edges,n_nodes,";
-    f_out << "lb_opt_1,lb_opt_2,lb_opt,sol_1,sol2,sol,approx,ub_approx" << std::endl;
+    f_out << "lb_opt_1,lb_opt_2,lb_opt,sol_1,sol2,sol,approx,approx_improved_1,approx_improved_2,ub_approx" << std::endl;
 
     for (int nd : n_depots)
     {
@@ -56,6 +56,8 @@ int main()
                 f_out << mdrpp.sol2.first << ",";
                 f_out << mdrpp.sol.first << ",";
                 f_out << mdrpp.approx_rate << ",";
+                f_out << mdrpp.approx_rate_improved_1 << ",";
+                f_out << mdrpp.approx_rate_improved_2 << ",";
                 f_out << 2.0 - 1.0 / static_cast<double>(2 * mdrpp.n_depots + 1) << "," << std::endl;
                 
             }

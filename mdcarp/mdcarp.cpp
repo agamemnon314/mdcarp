@@ -52,7 +52,7 @@ void MDRPP::get_reduced_graph() const
 {
 	std::random_device rd;
 	std::mt19937 rng(rd());
-	std::uniform_int_distribution<int> uid(1, 100);
+	std::uniform_int_distribution<int> uid(1, 50);
 	int n_nodes = countNodes(g);
 	std::vector<ListGraph::Edge> edges_to_remove;
 	ListGraph::NodeMap<bool> is_node_required(g, false);
@@ -402,22 +402,28 @@ void MDRPP::solve()
 		std::cout << "Solution cost of MRPP2 : " << sol2.first << std::endl;
 	}
 
-	double alpha_1 = 2 - 1.0 / static_cast<double>(n_depots);
-	double beta_1 = 1.0 / static_cast<double>(n_depots);
-	double alpha_2 = 3.0;
-	double beta_2 = 2.0;
-
-	double x = (alpha_2 * static_cast<double>(sol1.first) - alpha_1 * static_cast<double>(sol2.first)) / (alpha_1 * beta_2 + alpha_2 * beta_1);
-	lb_opt_1 = (static_cast<double>(sol1.first) - beta_1*x) / alpha_1;
-	lb_opt_2 = (static_cast<double>(sol2.first) + beta_2*x) / alpha_2;
-	lb_opt = std::max(lb_opt_1, lb_opt_2);
-
 	sol.first = std::min(sol1.first, sol2.first);
+	approx_rate_improved_1 = static_cast<double>(sol.first) / std::max(lb_opt_1, lb_opt_2);
+	approx_rate_improved_2 = static_cast<double>(sol.first) / std::max(lb_opt_1_1, lb_opt_2);
+
+	const double alpha_1 = 2.0 - 1.0 / static_cast<double>(n_depots);
+	const double beta_1 = 1.0 / static_cast<double>(n_depots);
+	const double alpha_2 = 3.0;
+	const double beta_2 = 2.0;
+
+	const double x = (alpha_2 * static_cast<double>(sol1.first) - alpha_1 * static_cast<double>(sol2.first)) / (alpha_1 * beta_2 + alpha_2 * beta_1);
+	const double lb_1 = (static_cast<double>(sol1.first) - beta_1*x) / alpha_1;
+	const double lb_2 = (static_cast<double>(sol2.first) + beta_2*x) / alpha_2;
+	lb_opt = std::max(lb_1, lb_2);
+
+	
 	approx_rate = sol.first / lb_opt;
 
 	std::cout << "Solution cost of MRPP : " << sol.first << std::endl;
 	std::cout << "OPT lower bound: " << lb_opt << std::endl;
 	std::cout << "Approximation ratio of MRPP : " << approx_rate << std::endl;
+	std::cout << "Approximation ratio of MRPP (improved v1 ) : " << approx_rate_improved_1 << std::endl;
+	std::cout << "Approximation ratio of MRPP (improved v2 ) : " << approx_rate_improved_2 << std::endl;
 	std::cout << "Theoretical Approximation ratio upper bound : " << 2.0 - 1.0 / static_cast<double>(2 * n_depots + 1) << std::endl;
 }
 
