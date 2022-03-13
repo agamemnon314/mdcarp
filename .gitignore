@@ -1,0 +1,7 @@
+*.lgf
+*.sol
+.vs/
+*.filters
+*.user
+*.vcxproj
+mdcarp/x64/
